@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUser;
+use App\Http\Requests\StoreUserAmount;
+use App\Http\Requests\StoreUsersTransfer;
 use App\Repositories\UserInterface;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
@@ -26,20 +28,12 @@ class UserController extends Controller
     /**
      * Get user balance
      *
-     * @param Request $request
+     * @param StoreUser $request
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function balance(Request $request)
+    public function balance(StoreUser $request)
     {
-        $validator = \Validator::make($request->all(), [
-            'user' => 'required|numeric|exists:users,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         $user = $this->user->getById($request->input('user'));
 
         return response()->json($user);
@@ -48,77 +42,48 @@ class UserController extends Controller
     /**
      * Add money to user
      *
-     * @param Request $request
+     * @param StoreUserAmount $request
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deposit(Request $request)
+    public function deposit(StoreUserAmount $request)
     {
-        $validator = \Validator::make($request->all(), [
-            'user' => 'required|numeric',
-            'amount' => 'required|numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         try {
             $this->user->deposit($request->input('user'), $request->input('amount'));
         } catch (\Exception $exception) {
             return response()->json(['errors' => $exception->getMessage()], 422);
         }
 
-        return response()->json([]);
+        return response()->json();
     }
 
     /**
      * Withdraw money from user
      *
-     * @param Request $request
+     * @param StoreUserAmount $request
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function withdraw(Request $request)
+    public function withdraw(StoreUserAmount $request)
     {
-        $validator = \Validator::make($request->all(), [
-            'user' => 'required|numeric|exists:users,id',
-            'amount' => 'required|numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         try {
             $this->user->withdraw($request->input('user'), $request->input('amount'));
         } catch (\Exception $exception) {
-
             return response()->json(['errors' => $exception->getMessage()], 422);
         }
 
-        return response()->json([]);
+        return response()->json();
     }
 
     /**
      * Transfer money from one user to another
      *
-     * @param Request $request
+     * @param StoreUsersTransfer $request
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function transfer(Request $request)
+    public function transfer(StoreUsersTransfer $request)
     {
-        $validator = \Validator::make($request->all(), [
-            'from' => 'required|numeric|exists:users,id',
-            'to' => 'required|numeric|not_same:from',
-            'amount' => 'required|numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         DB::beginTransaction();
 
         try {
@@ -139,6 +104,6 @@ class UserController extends Controller
 
         DB::commit();
 
-        return response()->json([]);
+        return response()->json();
     }
 }
