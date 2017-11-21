@@ -7,9 +7,15 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserTest extends TestCase
 {
-    public function testBalanceError()
+    public function testBalanceWithoutUserError()
     {
         $response = $this->get('/balance');
+        $response->assertStatus(422);
+    }
+
+    public function testBalanceNoValidIdUserError()
+    {
+        $response = $this->get('/balance?user=-101');
         $response->assertStatus(422);
     }
 
@@ -19,7 +25,7 @@ class UserTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testDepositError()
+    public function testDepositWithoutAmountError()
     {
         $response = $this->call('POST', 'deposit', array(
             'user' => '101',
@@ -68,6 +74,16 @@ class UserTest extends TestCase
         $response = $this->call('POST', 'transfer', array(
             'to' => '101',
             'amount' => '10000',
+        ));
+        $this->assertEquals(422, $response->getStatusCode());
+    }
+
+    public function testTransferAmountError()
+    {
+        $response = $this->call('POST', 'transfer', array(
+            'to' => '102',
+            'from' => '101',
+            'amount' => '-25',
         ));
         $this->assertEquals(422, $response->getStatusCode());
     }
